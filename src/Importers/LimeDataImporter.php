@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace EScooters\Importers;
 
 use DOMElement;
+use EScooters\Exceptions\CityNotAssignedToAnyCountryException;
 use EScooters\Importers\DataSources\HtmlDataSource;
+use EScooters\Utils\HardcodedCitiesToCountriesAssigner;
 use Symfony\Component\DomCrawler\Crawler;
 
 class LimeDataImporter extends DataImporter implements HtmlDataSource
@@ -22,7 +24,7 @@ class LimeDataImporter extends DataImporter implements HtmlDataSource
         $html = file_get_contents("https://www.li.me/locations");
 
         $crawler = new Crawler($html);
-        $this->sections = $crawler->filter("li.mb-5");
+        $this->sections = $crawler->filter(".pb-4 > .box-content .inline-block");
 
         return $this;
     }
@@ -32,28 +34,25 @@ class LimeDataImporter extends DataImporter implements HtmlDataSource
         /** @var DOMElement $section */
         foreach ($this->sections as $section) {
             $country = null;
+            $cityName = trim($section->nodeValue);
+            if ($cityName) {
 
-            foreach ($section->childNodes as $node) {
-                if ($node->nodeName === "strong") {
-                    $countryName = trim($node->nodeValue ?? "");
-                    $country = $this->countries->retrieve($countryName);
-                }
-
-                if ($node->nodeName === "ul") {
-                    foreach ($node->childNodes as $city) {
-                        if ($city->nodeName === "li") {
-                            if (str_contains($city->nodeValue, "University")) {
-                                continue;
-                            }
-
-                            $city = $this->cities->retrieve($city->nodeValue, $country);
-                            $this->provider->addCity($city);
+                    try {
+                        $hardcoded = HardcodedCitiesToCountriesAssigner::assign($cityName);
+                        if ($hardcoded) {
+                            $country = $this->countries->retrieve($hardcoded);
                         }
+                        
+                    } catch (CityNotAssignedToAnyCountryException $exception) {
+                        echo $exception->getMessage() . PHP_EOL;
+                        continue;
                     }
                 }
+                $city = $this->cities->retrieve($cityName, $country);
+                $this->provider->addCity($city);
             }
-        }
 
         return $this;
     }
 }
+ 
