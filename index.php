@@ -13,7 +13,7 @@ use EScooters\Importers\LinkDataImporter;
 use EScooters\Importers\NeuronDataImporter;
 use EScooters\Importers\QuickDataImporter;
 use EScooters\Importers\SpinDataImporter;
-use EScooters\Importers\TierDataImporter;
+//use EScooters\Importers\TierDataImporter;
 use EScooters\Importers\VoiDataImporter;
 use EScooters\Importers\WhooshDataImporter;
 use EScooters\Models\Repositories\Cities;

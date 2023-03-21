@@ -7,6 +7,7 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/krzysztofrewak/flat-flags-iconset@latest/style.css">
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
         <link rel="stylesheet" href="https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css">
+       <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css" /> -->
         <style>
             #map {
                 height: 640px;
@@ -15,6 +16,9 @@
     </head>
 
     <body>
+      <div name="DarkMode" style="float: right; padding-right: 25px; padding-top: 28px;">
+        <button class="px-4 py-2 text-white bg-green-500 rounded">Toggle DarkMode</button>
+      </div>
         <div id="application">
             <div class="container mx-auto flex mt-12">
                 <div class="w-64">
@@ -97,7 +101,6 @@
                     </div>
                 </div>
             </div>
-
             <footer class="container mx-auto my-12 text-gray-500 text-right text-sm">
                 <span class="mx-5">last build: {{ buildTimestamp }}</span>
                 <span class="mx-5">Krzysztof Rewak &copy; 2022</span>
@@ -154,6 +157,7 @@
             selected: {
               country: '',
               provider: ''
+              
             }
           }
         },
