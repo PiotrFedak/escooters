@@ -35,7 +35,7 @@ $dataImporters = [
     new BoltDataImporter($cities, $countries),
     new LimeDataImporter($cities, $countries),
     new QuickDataImporter($cities, $countries),
-    new TierDataImporter($cities, $countries),
+ //   new TierDataImporter($cities, $countries),
     new VoiDataImporter($cities, $countries),
     new LinkDataImporter($cities, $countries),
     new SpinDataImporter($cities, $countries),
@@ -43,7 +43,7 @@ $dataImporters = [
     new HelbizDataImporter($cities, $countries),
     new WhooshDataImporter($cities, $countries),
     new BirdDataImporter($cities, $countries),
-    new DottDataImporter($cities, $countries),
+  //  new DottDataImporter($cities, $countries),
 ];
 
 $timestamp = date("Y-m-d H:i:s");

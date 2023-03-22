@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace EScooters\Importers;
 
 use DOMElement;
+use EScooters\Exceptions\CityNotAssignedToAnyCountryException;
 use EScooters\Importers\DataSources\HtmlDataSource;
+use EScooters\Utils\HardcodedCitiesToCountriesAssigner;
 use GuzzleHttp\Client;
 use Symfony\Component\DomCrawler\Crawler;
 
@@ -21,56 +23,56 @@ class LinkDataImporter extends DataImporter implements HtmlDataSource
     public function extract(): static
     {
         $client = new Client();
-        $html = $client->get("http://www.link.city/cities")->getBody()->getContents();
+        $html = $client->get("https://superpedestrian.com/locations")->getBody()->getContents();
 
         $crawler = new Crawler($html);
-        $this->sections = $crawler->filter("#content .sqs-row.row > .col p > strong");
+        $this->sections = $crawler->filter("div.row.sqs-row div.col div div p");
 
         return $this;
     }
 
     public function transform(): static
     {
-        /** @var DOMElement $section */
+            /** @var DOMElement $section */
         foreach ($this->sections as $section) {
-            foreach ($section->childNodes as $node) {
-                $countryName = trim($node->nodeValue);
-                if (in_array($countryName, ["Tech-Enabled Compliance", "COVID-19 RAPID RESPONSE CASE STUDY"], true)) {
-                    continue;
+            $country = null;
+            $cityName = trim($section->nodeValue);
+            $exception = ["California", "Connecticut", "Illinois", "Kansas", "Maryland", "Michigan", "New Jersey", "Ohio", "Tennessee", "Texas", "Virginia", "Washington","Austria","France","Germany","Italy","Portugal","Spain","United Kingdom"];
+            
+            if ($cityName) {
+                if ($cityName === "Ride with us in cities around the world!") {
+                    continue; 
                 }
 
-                $country = $this->countries->retrieve($countryName);
-
-                foreach ($node->parentNode->parentNode->parentNode->childNodes as $i => $cityName) {
-                    if ($i === 0 || !trim($cityName->nodeValue)) {
+                    if (in_array($cityName, $exception, true)) {
                         continue;
                     }
 
-                    $name = $cityName->nodeValue;
-                    if ($country->getId() === "us" && str_contains($name, ", ")) {
-                        $name = explode(",", $name)[0];
-                    }
-
-                    $cities = [];
-                    if (str_contains($name, "(") && str_contains($name, ")")) {
-                        $names = explode("(", $name)[1];
-                        $names = explode(")", $names)[0];
-                        $names = explode(", ", $names);
-                        foreach ($names as $name) {
-                            $cities[] = str_replace("*", "", $name);
+                    if($cityName==="Nottingham"){
+                        $hardcoded = HardcodedCitiesToCountriesAssigner::assign($cityName);
+                        if ($hardcoded) {
+                            $country = $this->countries->retrieve($hardcoded);
                         }
-                    } else {
-                        $cities[] = $name;
+                        $city = $this->cities->retrieve($cityName, $country);
+                        $this->provider->addCity($city);
+                        break;
                     }
 
-                    foreach ($cities as $name) {
-                        $city = $this->cities->retrieve($name, $country);
-                        $this->provider->addCity($city);
+                    try {
+                        $hardcoded = HardcodedCitiesToCountriesAssigner::assign($cityName);
+                        if ($hardcoded) {
+                            $country = $this->countries->retrieve($hardcoded);
+                        }
+                        
+                    } catch (CityNotAssignedToAnyCountryException $exception) {
+                        echo $exception->getMessage() . PHP_EOL;
+                        continue;
                     }
                 }
+                $city = $this->cities->retrieve($cityName, $country);
+                $this->provider->addCity($city);
+               // echo ( strlen($cityName).". ");
             }
+            return $this;
+            } 
         }
-
-        return $this;
-    }
-}
